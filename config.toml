@@ -39,4 +39,7 @@ paginate = 10
         identifier = "about"
         name = "about"
         url = "https://fooock.com"
-
+      [[languages.en.menu.main]]
+        identifier = "report-issue"
+        name = "report an issue"
+        url = "https://github.com/fooock/my-blog/issues"
