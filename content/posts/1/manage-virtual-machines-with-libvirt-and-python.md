@@ -54,7 +54,7 @@ There are two types of sockets:
 
 We will open the full read-write socket.
 
-```
+```python
 >>> import libvirt
 >>> conn = libvirt.open('qemu:///system')
 >>> conn.getVersion()
@@ -63,7 +63,7 @@ We will open the full read-write socket.
 
 If you want to use the read only socket, then you need to specify it when `open()` method is called, or use the short way, calling `openReadOnly()`:
 
-```
+```python
 >>> conn = libvirt.open('qemu:///system?socket=/var/run/libvirt/libvirt-sock-ro')
 >>> # Or call, conn = libvirt.openReadOnly('qemu:///system')
 >>> conn.getVersion()
@@ -78,7 +78,7 @@ These two methods to create a connection are deprecated in favour of the method 
 
 The `conn` object is of type `libvirt.virConnect`. All connections should be closed using the `close()` method:
 
-```
+```python
 >>> conn.close()
 0
 >>> conn.getVersion()
