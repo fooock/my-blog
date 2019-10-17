@@ -22,7 +22,7 @@ If you are in Ubuntu like me, you need to install the `libvirt-dev` package. Usi
 $ sudo apt-get install libvirt-dev
 ```
 
-Also, you will need [Python](https://www.python.org/) and [pip](https://pypi.org/project/pip/) installed in your system. We will create a new virtual environment using `Python 3.7`. For this purpuse I use [Conda](https://docs.conda.io/en/latest/). The next command creates a virtual environment called `libvirt`
+Also, you will need [Python](https://www.python.org/) and [pip](https://pypi.org/project/pip/) installed in your system. We will create a new virtual environment using `Python 3.7`. For this purpose I use [Conda](https://docs.conda.io/en/latest/). The next command creates a virtual environment called `libvirt`
 
 ```
 $ conda create --name libvirt python=3.7
@@ -61,15 +61,20 @@ We will open the full read-write socket.
 3001000
 ```
 
-If you want to use the read only socket, then you need to specify it when `open()` method is called:
+If you want to use the read only socket, then you need to specify it when `open()` method is called, or use the short way, calling `openReadOnly()`:
 
 ```
 >>> conn = libvirt.open('qemu:///system?socket=/var/run/libvirt/libvirt-sock-ro')
+>>> # Or call, conn = libvirt.openReadOnly('qemu:///system')
 >>> conn.getVersion()
 3001000
 ```
 
 When no hostname is provided in the URI, by default it uses `unix` transport (same reduntant URI is `qemu+unix:///system?socket=...`).
+
+These two methods to create a connection are deprecated in favour of the method `openAuth(driver, credentials, flags)`. Apart from the driver URI, it takes two more arguments, one with a Python list with the client credentials, and a flags parameter to allows the application request a read only or other type of connection.
+
+### Release resources
 
 The `conn` object is of type `libvirt.virConnect`. All connections should be closed using the `close()` method:
 
