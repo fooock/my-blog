@@ -1,10 +1,10 @@
 +++
-title = "Manage libvirt with Python"
+title = "Manage libvirt with Python, TLS and SASL"
 date = "2019-10-16T19:46:11+02:00"
 author = "Javi"
 tags = ["libvirt", "python", "kvm", "virtualization"]
 showFullContent = false
-description = "In this post I will show you how to install the python package to manage libvirt and connect to the libvirtd RPC interface."
+description = "In this post I will show you how to install the python package to manage libvirt and connect to the libvirtd RPC interface using TLS encryption and SASL authentication."
 draft = false
 +++
 
@@ -26,10 +26,9 @@ Also, you will need [Python](https://www.python.org/) and [pip](https://pypi.org
 
 ```
 $ conda create --name libvirt python=3.7
-$ conda install --name libvirt pip
 ```
 
-When done, you need to activate this environment using `conda activate libvirt`. Now, we will proceed to install the [libvirt-python](https://pypi.org/project/libvirt-python/) package, version `5.7.0` using pip (at this time, this is the latest release).
+When done, you need to activate this environment using `conda activate libvirt`. Now, we will proceed to install the [libvirt-python](https://pypi.org/project/libvirt-python/) package version `5.7.0` using pip (at this time, this is the latest release).
 
 ```
 (libvirt) $ pip install libvirt-python==5.7.0
@@ -43,7 +42,7 @@ As I commented previously, we'll use the `KVM` hypervisor. As this hypervisor is
 
 >Note that this is a privileged URI.
 
-To open a connection to the RPC server exposed by the *libvirt daemon*, it must be running. You can check it's state using `systemctl status libvirtd`. In case that the daemon is not available, you will start it using `systemctl start libvirtd`.
+To open a connection to the RPC server exposed by the *libvirt daemon*, it must be running. You can check it's state using `systemctl status libvirtd`. In case that the daemon is not available, you will need to start it using `systemctl start libvirtd`.
 
 >For default, this daemon will only be listening for connection on a local UNIX domain socket. As it is only accessible on the local machine, it's **unencrypted**. 
 
@@ -88,7 +87,7 @@ Next, if you restart the `libvirtd` using `systemctl restart libvirtd`, it will 
 We need to generate server certificates. For this purpose we will use `openssl`.
 
 ```bash
-$ # First we create a random passphrase that is written to the passphrase file
+$ # First we create a random passphrase that is written to the passphrase.txt file
 $ echo `openssl rand -base64 8` > passphrase.txt
 $ # Generate CA certificates
 $ openssl genrsa -out cakey.pem -passout file:passphrase.txt 2048
@@ -104,7 +103,7 @@ Now, we need to copy these files to the corresponding folder:
 
 * The `cacert.pem` certificate will be copied to the `/etc/pki/CA/` folder.
 * The `servercert.pem` certificate will be copied to the `/etc/pki/libvirt/` folder.
-* The `serverkey.pem` private key will be vopied to the `/etc/pki/libvirt/private/` folder.
+* The `serverkey.pem` private key will be copied to the `/etc/pki/libvirt/private/` folder.
 
 >Remember that server certificates must be readable to QEMU processes. Adjust read access to those files.
 
