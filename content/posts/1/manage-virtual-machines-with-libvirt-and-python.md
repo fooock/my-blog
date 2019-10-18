@@ -76,7 +76,7 @@ These two methods to create a connection are deprecated in favour of the method 
 I will show you how to configure `libvirt` with authentication using [`SASL`](https://en.wikipedia.org/wiki/Simple_Authentication_and_Security_Layer). There are several points to note:
 
 * `SASL` doesn't require real accounts on the server. It uses its own database to store names and passwords.
-* Connections using `SASL` are encrypted. The current data encryption mechanism in the new versions of `libvirt` is `GSSAPI`, but we will use `TLS`. Since we will use `SASL` an top of `TLS`, we can deactivate session encryption to avoid overhead.
+* Connections using `SASL` are encrypted. The current data encryption mechanism in the new versions of `libvirt` is `GSSAPI`, but we will use `TLS`. Since we will use `SASL` on top of `TLS`, we can deactivate session encryption to avoid overhead.
 
 Lets go. First, we need to edit the file `/etc/default/libvirtd` and add this option to start listening on TCP: `libvirtd_opts="-l"`
 
