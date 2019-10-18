@@ -24,7 +24,49 @@ $ conda install --name libvirt pip
 &gt;&gt;&gt; # Or call, conn = libvirt.openReadOnly('qemu:///system')
 &gt;&gt;&gt; conn.getVersion()
 3001000
-</code></pre><p>When no hostname is provided in the URI, by default it uses <code>unix</code> transport (same reduntant URI is <code>qemu+unix:///system?socket=...</code>).</p><p>These two methods to create a connection are deprecated in favour of the method <code>openAuth(driver, credentials, flags)</code>. Apart from the driver URI, it takes two more arguments, one with a Python list with the client credentials, and a flags parameter to allows the application request a read only or other type of connection.</p><h3 id=release-resources>Release resources</h3><p>The <code>conn</code> object is of type <code>libvirt.virConnect</code>. All connections should be closed using the <code>close()</code> method:</p><pre><code class=language-python>&gt;&gt;&gt; conn.close()
+</code></pre><p>When no hostname is provided in the URI, by default it uses <code>unix</code> transport (same reduntant URI is <code>qemu+unix:///system?socket=...</code>).</p><p>These two methods to create a connection are deprecated in favour of the method <code>openAuth(driver, credentials, flags)</code>. Apart from the driver URI, it takes two more arguments, one with a Python list with the client credentials, and a flags parameter to allows the application request a read only or other type of connection.</p><p>I will show you how to configure <code>libvirt</code> with authentication using <a href=https://en.wikipedia.org/wiki/Simple_Authentication_and_Security_Layer><code>SASL</code></a>. There are several points to note:</p><ul><li><code>SASL</code> doesn&rsquo;t require real accounts on the server. It uses its own database to store names and passwords.</li><li>Connections using <code>SASL</code> are encrypted. The current data encryption mechanism in the new versions of <code>libvirt</code> is <code>GSSAPI</code>, but we will use <code>TLS</code>. Since we will use <code>SASL</code> an top of <code>TLS</code>, we can deactivate session encryption to avoid overhead.</li></ul><p>Lets go. First, we need to edit the file <code>/etc/default/libvirtd</code> and add this option to start listening on TCP: <code>libvirtd_opts=&quot;-l&quot;</code></p><blockquote><p>You can use <code>-l</code> or <code>--listen</code></p></blockquote><p>Next, if you restart the <code>libvirtd</code> using <code>systemctl restart libvirtd</code>, it will fail. Why?. Well, by default when this option is enabled, it is necesary to set up a CA and issue server certificates.</p><p>We need to generate server certificates. For this purpose we will use <code>openssl</code>.</p><pre><code class=language-bash>$ # First we create a random passphrase that is written to the passphrase file
+$ echo `openssl rand -base64 8` &gt; passphrase.txt
+$ # Generate CA certificates
+$ openssl genrsa -out cakey.pem -passout file:passphrase.txt 2048
+$ openssl req -new -x509 -key cakey.pem -out cacert.pem -passin file:passphrase.txt
+$ # Generate new CSR
+$ openssl genrsa -out serverkey.pem 2048
+$ openssl req -new -key serverkey.pem -out server.csr
+$ # Now we create a certificate using the CA
+$ openssl x509 -req -in server.csr -CA cacert.pem -CAkey cakey.pem -CAcreateserial -out servercert.pem
+</code></pre><p>Now, we need to copy these files to the corresponding folder:</p><ul><li>The <code>cacert.pem</code> certificate will be copied to the <code>/etc/pki/CA/</code> folder.</li><li>The <code>servercert.pem</code> certificate will be copied to the <code>/etc/pki/libvirt/</code> folder.</li><li>The <code>serverkey.pem</code> private key will be vopied to the <code>/etc/pki/libvirt/private/</code> folder.</li></ul><blockquote><p>Remember that server certificates must be readable to QEMU processes. Adjust read access to those files.</p></blockquote><p>When done, you need to enable <code>TLS</code> in the <code>/etc/libvirt/libvirtd.conf</code> file. By default, secure TLS connections are enabled by default, but you can add <code>listen_tls = 1</code> to make configuration more readable. Restart <code>libvirtd</code>. Done.</p><p>To test this configuration, you need to create a new certificate for your client, and call one command using <code>TLS</code> transport in the hypervisor driver connection. We will use <code>virsh</code> for this test:</p><pre><code class=language-bash>$ sudo virsh -c qemu+tls://localhost/system list --all
+Id   Name   State
+--------------------
+</code></pre><p>The last step is to configure <code>SASL</code>. We need to add to the file <code>/etc/libvirt/libvirtd.conf</code> this two lines:</p><ul><li><code>auth_tcp = &quot;sasl&quot;</code> to enable <code>SASL</code> for tcp connections.</li><li><code>auth_tls = &quot;sasl&quot;</code> to enable <code>SASL</code> for TLS connections.</li></ul><p>Now we need to configure <code>SASL</code> users. Install the package <code>sasl2-bin</code>, from ubuntu you can:</p><pre><code class=language-bash>$ sudo apt-get install sasl2-bin
+</code></pre><p>Add a new user and restart the <code>libvirtd</code>. If you try to execute the last command to list domains in the host, the result will be:</p><pre><code>$ sudo virsh -c qemu+tls://localhost/system list --all
+error: failed to connect to the hypervisor
+error: authentication failed: authentication failed
+</code></pre><p>Create the file <code>auth.conf</code> in <code>/etc/libvirt</code>, and put the user and password created in the last step using <code>saslpasswd2</code>.</p><pre><code class=language-toml>[credentials-sasl]
+authname=
+password=
+
+[auth-libvirt-localhost]
+credentials=sasl
+</code></pre><blockquote><p>Remeber restart <code>libvirtd</code>.</p></blockquote><p>We go to write a Python script to test if all works correctly.</p><pre><code class=language-python>import libvirt
+
+SASL_USER = &quot;YOUR_USER&quot;
+SASL_PASS = &quot;YOUR_PASSWORD&quot;
+
+def request_cred(credentials, user_data):
+  for credential in credentials:
+    if credential[0] == libvirt.VIR_CRED_AUTHNAME:
+      credential[4] = SASL_USER
+    elif credential[0] == libvirt.VIR_CRED_PASSPHRASE:
+      credential[4] = SASL_PASS
+  return 0
+
+auth = [[libvirt.VIR_CRED_AUTHNAME, libvirt.VIR_CRED_PASSPHRASE], request_cred, None]
+conn = libvirt.openAuth('qemu+tls://localhost/system', auth, 0)
+print(conn.getVersion())
+conn.close()
+</code></pre><p>If you execute the script, then:</p><pre><code class=language-bash>(libvirt) $ python virt.py
+3001000
+</code></pre><p>All works fine!.</p><h3 id=release-resources>Release resources</h3><p>The <code>conn</code> object is of type <code>libvirt.virConnect</code>. All connections should be closed using the <code>close()</code> method:</p><pre><code class=language-python>&gt;&gt;&gt; conn.close()
 0
 &gt;&gt;&gt; conn.getVersion()
 libvirt: Domain Config error : invalid connection pointer in virConnectGetVersion
