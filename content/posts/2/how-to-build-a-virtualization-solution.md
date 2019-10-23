@@ -17,3 +17,19 @@ If you ever used [Digital Ocean](https://m.do.co/c/6f2ea013e5c7), then you used 
 ### Let's get started
 
 First, at a high level, we need to identify each component. Each of these components, produces logs, has security implications, needs to be available as much time as possible and has to respond to performance requirements.
+
+For this system, I will use an API to manage virtual machines, storage, and networks. Who can invoke these backend operations?. Logically, just me :-). I was thinking of using *Basic Auth* to handle authentication, but finally, I will use JWT to handle authentication and authorization to restrict the use of some methods of the API and be stateless. Who receives the payload from the API?. The host agent. This agent, installed inside the host, invokes methods from the *libvirt* library. Who can monitor the state of the virtual machines?. Only the guest agent.
+
+#### <u>Backend</u>
+
+This is an application that runs multiple web services. The main purpose of this component is to manage host resources through the host agent. It is the main interface of the system. Also, this application is responsible for scheduling virtual machines in the current hosts using a scheduler algorithm that will check CPU and energy consumption.
+
+>Scheduler algorithm can be used with a policy file written (for example) in YAML to make it as more generic as possible to be able to implement multiple schedulers using the same codebase.
+
+#### <u>Host agent</u>
+
+This software is a layer on top of libvirt library that executes the commands sent by the backend. It covers all functionality to create resources like virtual machines, disks, and networks in the hosts that the agent is installed.
+
+#### <u>Guest agent</u>
+
+This application runs inside all virtual machines running in a host.
