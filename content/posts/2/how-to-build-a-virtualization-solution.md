@@ -4,7 +4,7 @@ date = 2019-10-21T20:17:03+02:00
 author = "Javi"
 tags = ["libvirt", "kvm", "virtualization"]
 showFullContent = false
-draft = true
+draft = false
 description = "How do virtualization solutions work? I’m curious about that, and I want to create one from scratch using only open source technologies. In this post, I will show you the main components of these types of solutions and their main responsibilities."
 +++
 
