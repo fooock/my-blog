@@ -18,9 +18,9 @@ Note that this is the very first part of a series of blogs where I will put my s
 
 If you ever used [Digital Ocean](https://m.do.co/c/6f2ea013e5c7), then you used the pretty face of a complete virtualization solution but on a big scale, also called IaaS (*Infrastructure as a Service*). The purpose of an IaaS is to abstract all hardware, servers, networks, storage etc and offer it as an online service. The topic is bigger, but we will maintain it small. Go go go!.
 
-First, at a high level, we need to identify each component of the solution. Each of these components, produces logs, has security implications, needs to be available as much time as possible and has to respond to performance requirements.
+First, at a high level, we need to identify each component of the solution. Each of these components produces logs, has security implications, needs to be available as much time as possible and has to respond to performance requirements.
 
-For this solution, I will use an API as an entry point to manage virtual machines, storage, and networks. Who can invoke these backend operations?. Logically, just me :-). I was thinking of security using *Basic Auth* to handle authentication, but probably, I will use JWT to handle authentication and authorization to restrict the use of some methods of the API and be stateless. 
+For this solution, I will use an API as an entry point to manage virtual machines, storage, and networks. Who can invoke these backend operations?. Logically, just me :-). I was thinking of security using *Basic Auth* to handle authentication, but probably, I will use JWT to handle authentication and authorization to restrict the use of some methods of the API to some other actors without the power of an administrator user.
 
 Who receives the payload from the API?. The host agent. This agent, installed inside the host, invokes methods from the *libvirt* library. Who can monitor the state of the virtual machines?. Only the guest agent, that runs inside the VM deployed from the host.
 
@@ -40,7 +40,7 @@ Which is the best strategy for this use case?. I think that here fit best the fi
 * If we have more than one backend to ensure HA, then the scheduler must be distributed.
 * The backend needs to know the status URL to request from the agents. For this purpose, we need a service discovery software to register agents, increasing system complexity.
 
-There are more problems, but these two are the most relevant for scheduler design. Note that the second point is not really a problem, because we need a 'host discovery' software to register new hosts automatically when available. Imagine that I buy a new server. I will execute a set of Ansible roles and scripts over the new host to install dependencies, update software, apply security rules, configure log rotation and... publish the new host to be available to the backend to schedule new resources into it!. I will talk about this topic soon.
+There are more problems, but these two are the most relevant for scheduler design. Note that the second point is not really a problem, because we need a 'host discovery' software to register new hosts automatically when available. Imagine that I bought a new server. I will execute a set of Ansible roles and scripts over the new host to install dependencies, update software, apply security rules, configure log rotation and... publish the new host to be available to the backend to schedule new resources into it!. I will talk about this topic soon.
 
 The backend will make many more operations, and to handle all these things, it will use a database to maintain all configurations. Imagine that I need to list all snapshots from one VM, how can I do it without a database?. Probably the technology used for the database will be [PostgreSQL](https://www.postgresql.org/), but I don't discard other options. I need to research.
 
@@ -48,7 +48,7 @@ I don't know what tech stack I will use to develop this component, but I'm think
 
 #### <u>Host agent</u>
 
-This software is a layer on top of libvirt library, that executes the commands sent by the backend. It covers all functionality to create resources like virtual machines, disks, and networks in the hosts that the agent is installed. Without this software, there is no possibility to create resources.
+This software will be a layer on top of the libvirt library that executes the commands sent by the backend. It covers all functionality to create resources like virtual machines, disks, and networks in the hosts that the agent is installed. Without this software, there is no possibility to create on demand resources.
 
 >The agent exposes a REST API that should be called **only** by the backend. The communication with the backend must be encrypted using TLS, and I will configure CORS to allow only calls from the backend. This API must be considered internal, and not for public usage.
 
@@ -57,13 +57,13 @@ Also, the agent is responsible (among other things) to handle all metrics sent b
 This application exchanges data with other systems through different protocols, but mainly in *https*. For example:
 
 * The backend sends a request the create a new virtual machine. The request from the backend ends in the host agent, which will schedule the VM in the best host that complies with the given policy.
-* The host agent sends metrics from the guests every five seconds to the central reporting system. This action occurs without interaction with the backend, through scheduled tasks. This task should be able to be updated, and this update is triggered by the backend.
+* The host agent sends metrics from the guests every `X` seconds to the central reporting system. This action occurs without interaction with the backend, through scheduled tasks. This task should be able to be updated, and this update is triggered by the backend.
 
 These are only two examples of data exchange with other components, but can be more. Normally these systems should be the backend, the guest agent and the central reporting system.
 
-How this system should be running?. Probably, the best option here is to run this application as a service inside the host, using systemd.
+How this system should be running?. Probably, the best option here is to run this application as a service inside the host using systemd.
 
-Another good option is to expose this API through an Nginx server (configured as an inverse proxy) and delegate into it the rate limit control and other security and performance checks.
+Another good option is to expose this API through an Nginx server (configured as a reverse proxy) and delegate into it the rate limit control and other security and performance checks.
 
 #### <u>Guest agent</u>
 
