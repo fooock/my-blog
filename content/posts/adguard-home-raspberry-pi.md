@@ -7,7 +7,7 @@ tags = ["adguard", "privacidad", "raspberry", "fedora"]
 description = "Nuestra casa libre de trackers y ads gracias a `Adguard Home`, una solución open source para proteger nuestra privacidad y nuestros dispositivos. Lo montaremos todo sobre una RaspberryPi que usa Fedora como sistema operativo."
 +++
 
-Si estás cansado de que en tu Smart TV se muestren anuncios cada vez que pones un video de YouTube, o que cada vez que entras en un periódico online aparezcan grandes cantidades de publicidad que ocupan más espacio que las propias noticias, sigue leyendo porque esto es lo que necesitas.
+Si estás cansado de que cada vez que entras en un periódico online aparezcan grandes cantidades de publicidad que ocupan más espacio que las propias noticias, sigue leyendo porque esto es lo que necesitas.
 
 # Objetivo
 
