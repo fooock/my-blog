@@ -62,7 +62,7 @@ Para este sistema voy a instalar el sistema operativo [`Fedora 33`](https://fedo
 
 >Ten en cuenta que el soporte de Raspberry en Fedora está disponible en versiones `Raspberry Pi Model B version 2 and the 3-series of devices (3B, 3B+, 3A+, CM3, CM3+)`, por lo que si tienes una rpi4, tendrás que instalar un sistema operativo diferente.
 
-Descargate la distribución usando el siguiente comando:
+Descárgate la distribución usando el siguiente comando:
 
 ```
 wget https://download.fedoraproject.org/pub/fedora/linux/releases/33/Server/aarch64/images/Fedora-Minimal-33-1.3.aarch64.raw.xz
@@ -102,7 +102,7 @@ $ sudo arm-image-installer \
 
 >Revisa y confirma los datos. Espera a que termine.
 
-Una vez finalizado el proceso, desmonta el volumen de la tarjeta SD e introducela en la Raspberry Pi. Conectale los periféricos necesarios e inicia la instalación.
+Una vez finalizado el proceso, desmonta el volumen de la tarjeta SD e introducela en la Raspberry Pi. Conéctale los periféricos necesarios e inicia la instalación.
 
 #### Instalar el sistema
 
@@ -238,7 +238,7 @@ Vamos a crear una nueva zona para la configuración de AdGuard. Ejecutamos los s
 # firewall-cmd --reload
 ```
 
-Despues de todo, si intentamos entrar en la web, nos aparecerá la pantalla de instalación. Es importante seleccionar la IP que configuramos tanto para el acceso web como para el servidor DNS. Una vez terminada la configuración del dashboard, eliminamos el puerto 3000 del firewall.
+Después de todo, si intentamos entrar en la web, nos aparecerá la pantalla de instalación. Es importante seleccionar la IP que configuramos tanto para el acceso web como para el servidor DNS. Una vez terminada la configuración del dashboard, eliminamos el puerto 3000 del firewall.
 
 ```
 # firewall-cmd --zone=adguard --remove-port=3000/tcp --permanent
