@@ -1,6 +1,6 @@
 +++
 title = "AdGuard Home en Raspberry Pi"
-date = 2021-10-212T20:31:12+01:00
+date = 2021-10-21T20:31:12+01:00
 author = "Javi"
 draft = true
 tags = ["bioinformatics", "bio", "course"]
